@@ -7,6 +7,19 @@
  * @license MIT License (MIT) http://www.opensource.org/licenses/MIT
  */
 
+/*
+.caret-right {
+    border-bottom: 4px solid transparent;
+    border-top: 4px solid transparent;
+    border-left: 4px solid #000000;
+    display: inline-block;
+    height: 0;
+    opacity: 0.3;
+    vertical-align: middle;
+    width: 0;
+}
+*/
+
 .dropdown-submenu {
     position: relative;
 }
