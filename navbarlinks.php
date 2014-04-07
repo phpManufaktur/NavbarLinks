@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Library
+ * NavbarLinks
  *
  * @author Team phpManufaktur <team@phpmanufaktur.de>
  * @link https://kit2.phpmanufaktur.de
@@ -17,14 +17,22 @@
  * @param integer $level default is 0
  * @param boolean $add_dropdown_link default FALSE, add extra link to access the submenu
  * @param boolean $add_dropdown_divider default TRUE, separate the extra link with an divider
+ * @param array|string $icons default NULL, array with icon definition or string to JSON file
  * @param string $visibility i.e. 'public' by default
  * @param boolean $echo if true ECHO the links, otherwise RETURN
  * @return string
  */
-function navbarlinks($menu=0, $level=0, $add_dropdown_link=false, $add_dropdown_divider=true, $visibility='public', $echo=true)
+function navbarlinks(
+    $menu=0,
+    $level=0,
+    $add_dropdown_link=false,
+    $add_dropdown_divider=true,
+    $icons=null,
+    $visibility='public',
+    $echo=true)
 {
   $Navbar = new bsNavbarLinks();
-  $links = $Navbar->getNavbarLinks($menu, $level, $add_dropdown_link, $add_dropdown_divider, $visibility);
+  $links = $Navbar->getNavbarLinks($menu, $level, $add_dropdown_link, $add_dropdown_divider, $icons, $visibility);
   if ($echo) {
     echo $links;
   }
@@ -37,14 +45,14 @@ use Symfony\Component\Translation\Translator;
 use Symfony\Component\Translation\MessageSelector;
 use Symfony\Component\Translation\Loader\ArrayLoader;
 
-if (!defined('NAVBAR_LINKS_PATH')) {
-    define('NAVBAR_LINKS_PATH', __DIR__);
+if (!defined('NAVBARLINKS_PATH')) {
+    define('NAVBARLINKS_PATH', __DIR__);
 }
-if (!defined('FRAMEWORK_PATH')) {
-    define('FRAMEWORK_PATH', WB_PATH.'/kit2');
-}
+require_once NAVBARLINKS_PATH.'/i18n/Loader/Translator.php';
 
-require_once NAVBAR_LINKS_PATH.'/i18n/Loader/Translator.php';
+if (!defined('FRAMEWORK_PATH')) {
+  define('FRAMEWORK_PATH', WB_PATH.'/kit2');
+}
 
 require_once FRAMEWORK_PATH.'/framework/twig/twig/lib/Twig/Autoloader.php';
 Twig_Autoloader::register();
@@ -56,6 +64,7 @@ class bsNavbarLinks {
     protected static $start_level = null;
     protected static $add_dropdown_link = null;
     protected static $add_dropdown_divider = null;
+    protected static $icons = null;
 
     /**
      * Get the Page ID's for the given menu, level and visibility
@@ -117,7 +126,8 @@ class bsNavbarLinks {
     {
         global $database;
 
-        $SQL = "SELECT `parent`, `root_parent`, `position`, `level`, `menu_title`, `page_title`, `link` FROM `" . TABLE_PREFIX . "pages` WHERE `page_id`=$page_id";
+        $SQL = "SELECT `page_id`, `parent`, `root_parent`, `position`, `level`, `menu_title`, `page_title`, `link` FROM `" .
+            TABLE_PREFIX . "pages` WHERE `page_id`=$page_id";
         if (null === ($query = $database->query($SQL))) {
             throw new Exception($database->get_error());
         }
@@ -133,6 +143,7 @@ class bsNavbarLinks {
             $result['menu_first'] = ($result['position'] == 1);
             $result['menu_last'] = ($result['position'] == $max_position);
             $result['url'] = WB_URL . PAGES_DIRECTORY . $result['link'] . PAGE_EXTENSION;
+            $result['icons'] = self::$icons;
             return $result;
         } else {
             return false;
@@ -241,7 +252,7 @@ class bsNavbarLinks {
       $locale_paths = array('/i18n', '/i18n/Custom');
 
       foreach ($locale_paths as $locale_path) {
-          $this->addLanguageFiles(NAVBAR_LINKS_PATH.$locale_path);
+          $this->addLanguageFiles(NAVBARLINKS_PATH.$locale_path);
       }
 
       // set the locale from the CMS
@@ -254,8 +265,8 @@ class bsNavbarLinks {
     protected function initializeTwig()
     {
         $loader = new Twig_Loader_Filesystem(array(
-          NAVBAR_LINKS_PATH.'/template/custom',
-          NAVBAR_LINKS_PATH.'/template/default'
+          NAVBARLINKS_PATH.'/template/custom',
+          NAVBARLINKS_PATH.'/template/default'
         ));
 
         $this->twig = new Twig_Environment($loader, array(
@@ -264,6 +275,8 @@ class bsNavbarLinks {
             'debug' => true,
             'autoescape' => false
         ));
+        $this->twig->addExtension(new Twig_Extension_Debug());
+        $this->twig->addGlobal('CMS_URL', WB_URL);
     }
 
     /**
@@ -274,9 +287,10 @@ class bsNavbarLinks {
      * @param boolean $add_dropdown_link
      * @param boolean $add_dropdown_divider
      * @param string $visibility
+     * @param array $icons
      * @return string
      */
-    public function getNavbarLinks($menu=0, $level=0, $add_dropdown_link=false, $add_dropdown_divider=true, $visibility='public')
+    public function getNavbarLinks($menu=0, $level=0, $add_dropdown_link=false, $add_dropdown_divider=true, $icons=null, $visibility='public')
     {
         self::$start_level = $level;
         self::$add_dropdown_link = $add_dropdown_link;
@@ -287,6 +301,8 @@ class bsNavbarLinks {
 
         // initialize Twig
         $this->initializeTwig();
+
+        self::$icons = $icons;
 
         $navbar = '';
         $this->buildNavbar($menu, $level, $visibility, null, $navbar);
