@@ -100,6 +100,8 @@ The associated classes indicate the status of the items:
 
 The menu items can also contain [Bootstrap Glyphicons](http://getbootstrap.com/components/#glyphicons) (`sample-3.php`), [Font Awesome Icons](http://fontawesome.io/icons/) (`sample-5.php`) or images - see Parameter `icons` for more information.
 
+In [`/examples/websitebaker/templates/navbarlinks`](https://github.com/phpManufaktur/NavbarLinks/tree/master/examples/websitebaker/templates/navbarlinks) you will find an installable example for a WebsiteBaker Template in `ZIP` format.
+
 ## Parameter
 
 `navbarlinks()` can be used with optional parameters:
